@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conta Azul Pro - Sistema de Gestão Financeira</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ca: {
+                            blue: '#0066FF',
+                            darkBlue: '#0043A8',
+                            lightBlue: '#E6F0FF',
+                            bg: '#F4F6F9',
+                            cardBg: '#FFFFFF',
+                            text: '#2D3748',
+                            border: '#E2E8F0',
+                            red: '#E53E3E',
+                            green: '#38A169',
+                            yellow: '#D69E2E',
+                            orange: '#DD6B20'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F6F9; }
+        .tab-btn.active { color: #0066FF; border-bottom: 2px solid #0066FF; font-weight: 600; }
+        .sidebar-item.active { background-color: #E6F0FF; color: #0066FF; font-weight: 600; }
+        .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+    </style>
+</head>
+<body class="text-ca-text bg-ca-bg min-h-screen flex flex-col">
+
+    <!-- ==================== TELA DE LOGIN ==================== -->
+    <div id="loginPage" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full border border-gray-100">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-2 mb-2">
+                    <div class="bg-ca-blue text-white p-2 rounded-lg font-bold text-xl flex items-center justify-center w-10 h-10">CA</div>
+                    <span class="text-2xl font-bold tracking-tight text-gray-800">Conta<span class="text-ca-blue">Azul</span> <span class="text-xs bg-blue-100 text-ca-blue px-2 py-0.5 rounded font-semibold align-top">PRO</span></span>
+                </div>
+                <p class="text-sm text-gray-500">Acesse sua conta para gerenciar seu negócio</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-2">E-mail corporativo</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3 top-3.5 text-gray-400 text-sm"></i>
+                        <input type="email" id="loginEmail" required value="contato@empresa.com.br" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ca-blue focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600">Senha</label>
+                        <a href="#" class="text-xs font-medium text-ca-blue hover:underline">Esqueceu a senha?</a>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-3.5 text-gray-400 text-sm"></i>
+                        <input type="password" id="loginPassword" required value="123456" class="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ca-blue focus:bg-white transition-all">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center">
+                    <input type="checkbox" id="rememberMe" checked class="w-4 h-4 text-ca-blue border-gray-300 rounded focus:ring-ca-blue">
+                    <label for="rememberMe" class="ml-2 text-xs text-gray-600">Lembrar neste dispositivo por 30 dias</label>
+                </div>
+
+                <button type="submit" id="loginBtn" class="w-full bg-ca-blue hover:bg-ca-darkBlue text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm">
+                    <span>Entrar no Sistema</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-gray-100 text-center">
+                <p class="text-xs text-gray-500">Ainda não tem uma conta? <a href="#" class="font-semibold text-ca-blue hover:underline">Faça um teste grátis</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DASHBOARD / APLICAÇÃO PRINCIPAL ==================== -->
+    <div id="appContainer" class="hidden flex-1 flex flex-col md:flex-row min-h-screen">
+        <!-- BARRA LATERAL (NAVIGATION) -->
+        <aside class="w-full md:w-64 bg-white border-r border-ca-border flex-shrink-0 flex flex-col justify-between">
+            <div>
+                <!-- LOGO E HEADER SIDEBAR -->
+                <div class="p-5 border-b border-ca-border flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-ca-blue text-white p-1.5 rounded font-bold text-lg flex items-center justify-center w-8 h-8">CA</div>
+                        <span class="text-xl font-bold tracking-tight text-gray-800">Conta<span class="text-ca-blue">Azul</span></span>
+                    </div>
+                    <span class="bg-blue-50 text-ca-blue text-[10px] font-bold px-2 py-0.5 rounded">PRO</span>
+                </div>
+
+                <!-- MENU PRINCIPAL -->
+                <nav class="p-3 space-y-1">
+                    <button onclick="switchView('overview')" id="nav-overview" class="sidebar-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-gray-600 hover:bg-gray-100">
+                        <i class="fa-solid fa-chart-pie w-5"></i> Visão Geral
+                    </button>
+                    <button onclick="switchView('contasReceber')" id="nav-contasReceber" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-gray-600 hover:bg-gray-100">
+                        <i class="fa-solid fa-hand-holding-dollar w-5"></i> Contas a Receber
+                    </button>
+                    <button onclick="switchView('clientes')" id="nav-clientes" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-gray-600 hover:bg-gray-100">
+                        <i class="fa-solid fa-users w-5"></i> Clientes
+                    </button>
+                    <button onclick="switchView('contratos')" id="nav-contratos" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-gray-600 hover:bg-gray-100">
+                        <i class="fa-solid fa-file-contract w-5"></i> Contratos
+                    </button>
+                </nav>
+            </div>
+
+            <!-- PERFIL E LOGOUT -->
+            <div class="p-4 border-t border-ca-border bg-gray-50">
+                <div class="flex items-center gap-3 mb-3">
+                    <div id="userAvatar" class="w-9 h-9 rounded-full bg-ca-blue text-white font-bold flex items-center justify-center text-sm shadow">
+                        US
+                    </div>
+                    <div class="overflow-hidden">
+                        <p id="userNameDisplay" class="text-xs font-semibold text-gray-800 truncate">Usuário do Sistema</p>
+                        <p id="userEmailDisplay" class="text-[10px] text-gray-500 truncate">contato@empresa.com.br</p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 text-xs font-medium text-red-600 hover:bg-red-50 p-2 rounded-md transition-all border border-red-200">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair do Sistema
+                </button>
+            </div>
+        </aside>
+
+        <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+        <main class="flex-1 flex flex-col overflow-x-hidden">
+            <!-- TOPBAR / CABEÇALHO -->
+            <header class="bg-white border-b border-ca-border px-6 py-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <h1 id="pageTitle" class="text-xl font-bold text-gray-800">Visão Geral</h1>
+                    <p class="text-xs text-gray-500">Acompanhamento financeiro em tempo real</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openModal('modalCliente')" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition-all">
+                        <i class="fa-solid fa-user-plus text-ca-blue"></i> Novo Cliente
+                    </button>
+                    <button onclick="openModal('modalContrato')" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition-all">
+                        <i class="fa-solid fa-file-signature text-ca-blue"></i> Novo Contrato
+                    </button>
+                    <button onclick="openModal('modalLancamento')" class="bg-ca-blue hover:bg-ca-darkBlue text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition-all">
+                        <i class="fa-solid fa-plus"></i> Novo Lançamento
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTEÚDO DINÂMICO -->
+            <div class="p-6 flex-1 space-y-6">
+
+                <!-- VIEW 1: VISÃO GERAL -->
+                <div id="view-overview" class="view-panel space-y-6">
+                    <!-- CARDS DE RESUMO RESUMIDOS -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-ca-border shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Saldo Geral</span>
+                                <div class="w-8 h-8 rounded-full bg-blue-50 text-ca-blue flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-wallet"></i>
+                                </div>
+                            </div>
+                            <p id="overviewSaldo" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
+                            <span class="text-[11px] text-green-600 font-medium flex items-center gap-1 mt-1">
+                                <i class="fa-solid fa-circle-check"></i> Atualizado agora
+                            </span>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-ca-border shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Receitas a Receber</span>
+                                <div class="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-arrow-down-left"></i>
+                                </div>
+                            </div>
+                            <p id="overviewAReceber" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
+                            <span class="text-[11px] text-gray-400 mt-1 block">Próximos 30 dias</span>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-ca-border shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Clientes Ativos</span>
+                                <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                            </div>
+                            <p id="overviewClientes" class="text-2xl font-bold text-gray-800">0</p>
+                            <span class="text-[11px] text-gray-400 mt-1 block">Base cadastrada</span>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-ca-border shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Contratos Ativos</span>
+                                <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-file-contract"></i>
+                                </div>
+                            </div>
+                            <p id="overviewContratos" class="text-2xl font-bold text-gray-800">0</p>
+                            <span class="text-[11px] text-gray-400 mt-1 block">Receita recorrente</span>
+                        </div>
+                    </div>
+
+                    <!-- GRÁFICO FLUXO DE CAIXA -->
+                    <div class="bg-white p-6 rounded-xl border border-ca-border shadow-sm">
+                        <h3 class="text-sm font-bold text-gray-800 mb-4">Fluxo de Caixa Mensal</h3>
+                        <div class="h-64">
+                            <canvas id="cashFlowChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: CONTAS A RECEBER (LAYOUT CONTA AZUL PRO) -->
+                <div id="view-contasReceber" class="view-panel hidden space-y-4">
+                    <!-- CARDS DE RESUMO DO CONTAS A RECEBER (IDÊNTICO À IMAGEM DE REFERÊNCIA) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <span class="text-[11px] font-semibold text-gray-500 block mb-1">Vencidos (R$)</span>
+                            <p id="cardVencidos" class="text-xl font-bold text-red-600">0,00</p>
+                            <span class="text-[10px] text-gray-400">Total vencido</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <span class="text-[11px] font-semibold text-gray-500 block mb-1">Vencem hoje (R$)</span>
+                            <p id="cardVencemHoje" class="text-xl font-bold text-orange-500">0,00</p>
+                            <span class="text-[10px] text-gray-400">Para hoje</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <span class="text-[11px] font-semibold text-gray-500 block mb-1">A vencer (R$)</span>
+                            <p id="cardAVencer" class="text-xl font-bold text-blue-600">0,00</p>
+                            <span class="text-[10px] text-gray-400">Futuros</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <span class="text-[11px] font-semibold text-gray-500 block mb-1">Recebidos (R$)</span>
+                            <p id="cardRecebidos" class="text-xl font-bold text-green-600">0,00</p>
+                            <span class="text-[10px] text-gray-400">Quitados</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <span class="text-[11px] font-semibold text-gray-500 block mb-1">Total do período (R$)</span>
+                            <p id="cardTotalPeriodo" class="text-xl font-bold text-gray-800">0,00</p>
+                            <span class="text-[10px] text-gray-400">Geral</span>
+                        </div>
+                    </div>
+
+                    <!-- BARRA DE FILTROS E AÇÕES DA TABELA -->
+                    <div class="bg-white p-4 rounded-lg border border-ca-border shadow-sm flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <button onclick="openModal('modalLancamento')" class="bg-ca-blue hover:bg-ca-darkBlue text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus"></i> Novo registro
+                            </button>
+                            <button class="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-50">
+                                Relatórios
+                            </button>
+                            <button class="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-50">
+                                Exportar
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2 flex-1 max-w-md">
+                            <div class="relative w-full">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                                <input type="text" id="filterInput" onkeyup="filterReceberTable()" placeholder="Pesquisar por cliente, descrição..." class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ca-blue">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TABELA DE CONTAS A RECEBER -->
+                    <div class="bg-white rounded-lg border border-ca-border shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto scrollbar-thin">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-50 border-b border-ca-border text-gray-600 uppercase font-semibold">
+                                    <tr>
+                                        <th class="p-3 w-10 text-center"><input type="checkbox"></th>
+                                        <th class="p-3">Vencimento</th>
+                                        <th class="p-3">Recebimento</th>
+                                        <th class="p-3">Descrição / Cliente</th>
+                                        <th class="p-3 text-right">Total (R$)</th>
+                                        <th class="p-3 text-right">A receber (R$)</th>
+                                        <th class="p-3 text-center">Situação</th>
+                                        <th class="p-3 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaReceber" class="divide-y divide-gray-100">
+                                    <!-- Preenchido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 3: CADASTRO DE CLIENTES -->
+                <div id="view-clientes" class="view-panel hidden space-y-4">
+                    <div class="bg-white p-4 rounded-lg border border-ca-border shadow-sm flex items-center justify-between">
+                        <h2 class="text-sm font-bold text-gray-800">Clientes Cadastrados</h2>
+                        <button onclick="openModal('modalCliente')" class="bg-ca-blue hover:bg-ca-darkBlue text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-plus"></i> Novo Cliente
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg border border-ca-border shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-50 border-b border-ca-border text-gray-600 uppercase font-semibold">
+                                    <tr>
+                                        <th class="p-3">Razão Social / Nome</th>
+                                        <th class="p-3">CNPJ / CPF</th>
+                                        <th class="p-3">Contato</th>
+                                        <th class="p-3">E-mail</th>
+                                        <th class="p-3">Cidade/UF</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaClientes" class="divide-y divide-gray-100">
+                                    <!-- Preenchido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 4: GESTÃO DE CONTRATOS -->
+                <div id="view-contratos" class="view-panel hidden space-y-4">
+                    <div class="bg-white p-4 rounded-lg border border-ca-border shadow-sm flex items-center justify-between">
+                        <h2 class="text-sm font-bold text-gray-800">Contratos de Prestação de Serviços</h2>
+                        <button onclick="openModal('modalContrato')" class="bg-ca-blue hover:bg-ca-darkBlue text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-signature"></i> Novo Contrato
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg border border-ca-border shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-50 border-b border-ca-border text-gray-600 uppercase font-semibold">
+                                    <tr>
+                                        <th class="p-3">Nº Contrato</th>
+                                        <th class="p-3">Cliente</th>
+                                        <th class="p-3">Objeto / Serviço</th>
+                                        <th class="p-3 text-right">Valor Mensal</th>
+                                        <th class="p-3 text-center">Dia Venc.</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaContratos" class="divide-y divide-gray-100">
+                                    <!-- Preenchido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== MODAIS ==================== -->
+
+    <!-- MODAL 1: NOVO CLIENTE -->
+    <div id="modalCliente" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-gray-100">
+            <div class="p-4 bg-gray-50 border-b border-ca-border flex justify-between items-center">
+                <h3 class="font-bold text-sm text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-ca-blue"></i> Cadastrar Novo Cliente
+                </h3>
+                <button onclick="closeModal('modalCliente')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="salvarCliente(event)" class="p-5 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Razão Social / Nome Completo *</label>
+                        <input type="text" id="cliNome" required class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">CNPJ / CPF *</label>
+                        <input type="text" id="cliDoc" required placeholder="00.000.000/0001-00" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Telefone / WhatsApp</label>
+                        <input type="text" id="cliFone" placeholder="(55) 99999-9999" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">E-mail de Cobrança *</label>
+                        <input type="email" id="cliEmail" required placeholder="financeiro@cliente.com" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Cidade</label>
+                        <input type="text" id="cliCidade" value="Santa Maria" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Estado (UF)</label>
+                        <input type="text" id="cliUF" value="RS" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                </div>
+                <div class="pt-3 border-t border-ca-border flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modalCliente')" class="px-4 py-2 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-ca-blue hover:bg-ca-darkBlue text-white rounded text-xs font-semibold">Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: NOVO CONTRATO -->
+    <div id="modalContrato" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-gray-100">
+            <div class="p-4 bg-gray-50 border-b border-ca-border flex justify-between items-center">
+                <h3 class="font-bold text-sm text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-file-contract text-ca-blue"></i> Gerar Novo Contrato
+                </h3>
+                <button onclick="closeModal('modalContrato')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="salvarContrato(event)" class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Selecione o Cliente *</label>
+                    <select id="conCliente" required class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                        <!-- Opções preenchidas dinamicamente -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Valor Mensal (R$) *</label>
+                        <input type="number" step="0.01" id="conValor" required placeholder="1500.00" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Dia do Vencimento *</label>
+                        <input type="number" min="1" max="31" id="conDiaVenc" value="10" required class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Objeto do Serviço / Descrição *</label>
+                    <input type="text" id="conObjeto" required placeholder="Prestação de Serviços Contábeis / Mão de Obra" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="conGerarFinanceiro" checked class="w-4 h-4 text-ca-blue border-gray-300 rounded">
+                    <label for="conGerarFinanceiro" class="ml-2 text-xs text-gray-700">Lançar primeira parcela automaticamente no Contas a Receber</label>
+                </div>
+                <div class="pt-3 border-t border-ca-border flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modalContrato')" class="px-4 py-2 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-ca-blue hover:bg-ca-darkBlue text-white rounded text-xs font-semibold">Emitir Contrato</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: NOVO LANÇAMENTO FINANCEIRO -->
+    <div id="modalLancamento" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-gray-100">
+            <div class="p-4 bg-gray-50 border-b border-ca-border flex justify-between items-center">
+                <h3 class="font-bold text-sm text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-ca-blue"></i> Novo Lançamento Financeiro
+                </h3>
+                <button onclick="closeModal('modalLancamento')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="salvarLancamento(event)" class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Descrição / Referência *</label>
+                    <input type="text" id="lanDescricao" placeholder="Ex: Receita de Serviços Prestados" required class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Cliente Vinculado</label>
+                    <select id="lanCliente" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Valor (R$) *</label>
+                        <input type="number" step="0.01" id="lanValor" required placeholder="0.00" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Data de Vencimento *</label>
+                        <input type="date" id="lanVencimento" required class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Situação Inicial</label>
+                    <select id="lanSituacao" class="w-full p-2 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-ca-blue outline-none">
+                        <option value="A receber">A receber</option>
+                        <option value="Recebido">Recebido (Já quitado)</option>
+                    </select>
+                </div>
+                <div class="pt-3 border-t border-ca-border flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modalLancamento')" class="px-4 py-2 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-ca-blue hover:bg-ca-darkBlue text-white rounded text-xs font-semibold">Salvar Lançamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== SCRIPT DE LÓGICA DA APLICAÇÃO ==================== -->
+    <script>
+        // --- BASE DE DADOS EM MEMÓRIA ---
+        let state = {
+            clientes: [
+                { id: 1, nome: 'SEVEN SOLAR LTDA', doc: '12.345.678/0001-90', fone: '(55) 99887-1122', email: 'contato@sevensolar.com.br', cidade: 'Santa Maria', uf: 'RS' },
+                { id: 2, nome: 'MATHEUS RAMOS CORRETOR DE IMOVEIS', doc: '987.654.321-00', fone: '(55) 99123-4455', email: 'matheus@imoveis.com.br', cidade: 'Santa Maria', uf: 'RS' },
+                { id: 3, name: 'LETICIA DA SILVA SANTOS LTDA', doc: '33.444.555/0001-11', fone: '(55) 98111-2233', email: 'leticia@santos.com.br', cidade: 'Santa Maria', uf: 'RS' }
+            ],
+            contratos: [
+                { id: 101, clienteId: 1, clienteNome: 'SEVEN SOLAR LTDA', objeto: 'Gestão Contábil Mensal', valor: 380.00, diaVenc: 10, status: 'Ativo' },
+                { id: 102, clienteId: 2, clienteNome: 'MATHEUS RAMOS CORRETOR DE IMOVEIS', objeto: 'Assessoria Fiscal e Societária', valor: 150.00, diaVenc: 5, status: 'Ativo' }
+            ],
+            receber: [
+                { id: 1, vencimento: '2026-10-01', recebimento: '2026-10-02', cliente: 'MATHEUS RAMOS CORRETOR DE IMOVEIS', desc: 'E3 Venda 1014 - Receita de Serviços', valor: 150.00, aReceber: 0.00, situacao: 'Recebido' },
+                { id: 2, vencimento: '2026-10-05', recebimento: '2026-10-05', cliente: 'MATHEUS RAMOS CORRETOR DE IMOVEIS', desc: 'E3 Venda 1016 - Receita de Serviços', valor: 150.00, aReceber: 0.00, situacao: 'Recebido' },
+                { id: 3, vencimento: '2026-10-10', recebimento: '2026-10-10', cliente: 'RODRIGO KOHLER GOMES', desc: 'E3 Venda 1216B - Receita de Serviços', valor: 250.00, aReceber: 0.00, situacao: 'Recebido' },
+                { id: 4, vencimento: '2026-10-15', recebimento: '-', cliente: 'LETICIA DA SILVA SANTOS LTDA', desc: 'E3 Venda 117A7 - Receita de Serviços', valor: 230.00, aReceber: 230.00, situacao: 'Vencido' },
+                { id: 5, vencimento: '2026-10-20', recebimento: '2026-10-20', cliente: 'SEVEN SOLAR LTDA', desc: 'E3 Venda 114F6 - Receita de Serviços', valor: 380.00, aReceber: 0.00, situacao: 'Recebido' },
+                { id: 6, vencimento: '2026-10-30', recebimento: '-', cliente: 'CARLOS ARCHI ABEL', desc: 'E3 Venda 1250A - Receita de Serviços', valor: 347.00, aReceber: 347.00, situacao: 'Vencem hoje' },
+                { id: 7, vencimento: '2026-11-05', recebimento: '-', cliente: 'SEVEN SOLAR LTDA', desc: 'E3 Venda 1288 - Receita de Serviços', valor: 380.00, aReceber: 380.00, situacao: 'A vencer' }
+            ]
+        };
+
+        let chartInstance = null;
+
+        // --- SISTEMA DE AUTENTICAÇÃO ---
+        function togglePasswordVisibility() {
+            const pwd = document.getElementById('loginPassword');
+            const icon = document.getElementById('eyeIcon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwd.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const btn = document.getElementById('loginBtn');
+            
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Autenticando...`;
+            btn.disabled = true;
+
+            setTimeout(() => {
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+
+                // Atualizar Nome / Avatar
+                const namePart = email.split('@')[0].replace('.', ' ');
+                const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+                document.getElementById('userNameDisplay').innerText = formattedName;
+                document.getElementById('userEmailDisplay').innerText = email;
+                document.getElementById('userAvatar').innerText = formattedName.substring(0,2).toUpperCase();
+
+                // Inicializar Aplicação
+                initApp();
+            }, 800);
+        }
+
+        function handleLogout() {
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('loginBtn').innerHTML = `<span>Entrar no Sistema</span><i class="fa-solid fa-arrow-right text-xs"></i>`;
+            document.getElementById('loginBtn').disabled = false;
+        }
+
+        // --- NAVEGAÇÃO ENTRE ABAS ---
+        function switchView(viewName) {
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            document.getElementById(`nav-${viewName}`).classList.add('active');
+
+            const titles = {
+                overview: 'Visão Geral',
+                contasReceber: 'Contas a Receber (Conta Azul Pro)',
+                clientes: 'Gestão de Clientes',
+                contratos: 'Gestão de Contratos'
+            };
+            document.getElementById('pageTitle').innerText = titles[viewName];
+
+            if (viewName === 'overview') renderChart();
+        }
+
+        // --- INICIALIZAÇÃO DA APLICAÇÃO ---
+        function initApp() {
+            renderReceberTable();
+            renderClientesTable();
+            renderContratosTable();
+            populateSelects();
+            updateCalculations();
+            renderChart();
+        }
+
+        // --- CÁLCULOS E CARDS DA INTERFACE ---
+        function updateCalculations() {
+            let vencidos = 0, vencemHoje = 0, aVencer = 0, recebidos = 0;
+
+            state.receber.forEach(item => {
+                if (item.situacao === 'Recebido') {
+                    recebidos += item.valor;
+                } else if (item.situacao === 'Vencido') {
+                    vencidos += item.aReceber;
+                } else if (item.situacao === 'Vencem hoje') {
+                    vencemHoje += item.aReceber;
+                } else if (item.situacao === 'A vencer') {
+                    aVencer += item.aReceber;
+                }
+            });
+
+            const total = vencidos + vencemHoje + aVencer + recebidos;
+
+            // Formatação BRL
+            const fmt = val => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            document.getElementById('cardVencidos').innerText = fmt(vencidos);
+            document.getElementById('cardVencemHoje').innerText = fmt(vencemHoje);
+            document.getElementById('cardAVencer').innerText = fmt(aVencer);
+            document.getElementById('cardRecebidos').innerText = fmt(recebidos);
+            document.getElementById('cardTotalPeriodo').innerText = fmt(total);
+
+            // Atualiza Visão Geral
+            document.getElementById('overviewSaldo').innerText = 'R$ ' + fmt(recebidos);
+            document.getElementById('overviewAReceber').innerText = 'R$ ' + fmt(vencidos + vencemHoje + aVencer);
+            document.getElementById('overviewClientes').innerText = state.clientes.length;
+            document.getElementById('overviewContratos').innerText = state.contratos.length;
+        }
+
+        // --- RENDERIZAR TABELAS ---
+        function renderReceberTable() {
+            const tbody = document.getElementById('tabelaReceber');
+            tbody.innerHTML = '';
+
+            state.receber.forEach(item => {
+                let badgeClass = 'bg-gray-100 text-gray-600';
+                if (item.situacao === 'Recebido') badgeClass = 'bg-green-100 text-green-700 font-semibold';
+                if (item.situacao === 'Vencido') badgeClass = 'bg-red-100 text-red-700 font-semibold';
+                if (item.situacao === 'Vencem hoje') badgeClass = 'bg-orange-100 text-orange-700 font-semibold';
+                if (item.situacao === 'A vencer') badgeClass = 'bg-blue-100 text-blue-700 font-semibold';
+
+                const row = `
+                    <tr class="hover:bg-blue-50/50 transition-colors">
+                        <td class="p-3 text-center"><input type="checkbox"></td>
+                        <td class="p-3 font-medium text-gray-700">${formatDate(item.vencimento)}</td>
+                        <td class="p-3 text-gray-500">${item.recebimento !== '-' ? formatDate(item.recebimento) : '-'}</td>
+                        <td class="p-3">
+                            <p class="font-semibold text-gray-800">${item.desc}</p>
+                            <span class="text-[10px] text-gray-500 uppercase">${item.cliente}</span>
+                        </td>
+                        <td class="p-3 text-right font-medium text-gray-800">${item.valor.toFixed(2)}</td>
+                        <td class="p-3 text-right font-medium text-gray-600">${item.aReceber.toFixed(2)}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-0.5 text-[10px] rounded-full ${badgeClass}">${item.situacao}</span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button onclick="darBaixa(${item.id})" class="text-xs text-ca-blue hover:underline font-semibold">
+                                ${item.situacao === 'Recebido' ? 'Detalhes' : 'Dar Baixa'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function renderClientesTable() {
+            const tbody = document.getElementById('tabelaClientes');
+            tbody.innerHTML = '';
+            state.clientes.forEach(c => {
+                const row = `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-semibold text-gray-800">${c.nome}</td>
+                        <td class="p-3 text-gray-600">${c.doc}</td>
+                        <td class="p-3 text-gray-600">${c.fone}</td>
+                        <td class="p-3 text-gray-600">${c.email}</td>
+                        <td class="p-3 text-gray-600">${c.cidade}/${c.uf}</td>
+                        <td class="p-3 text-center"><span class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-semibold">Ativo</span></td>
+                        <td class="p-3 text-center">
+                            <button class="text-gray-400 hover:text-ca-blue"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function renderContratosTable() {
+            const tbody = document.getElementById('tabelaContratos');
+            tbody.innerHTML = '';
+            state.contratos.forEach(con => {
+                const row = `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-semibold text-ca-blue">#CTR-${con.id}</td>
+                        <td class="p-3 font-medium text-gray-800">${con.clienteNome}</td>
+                        <td class="p-3 text-gray-600">${con.objeto}</td>
+                        <td class="p-3 text-right font-semibold text-gray-800">R$ ${con.valor.toFixed(2)}</td>
+                        <td class="p-3 text-center font-medium">Dia ${con.diaVenc}</td>
+                        <td class="p-3 text-center"><span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-semibold">${con.status}</span></td>
+                        <td class="p-3 text-center">
+                            <button class="text-gray-400 hover:text-ca-blue"><i class="fa-solid fa-file-pdf"></i></button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // --- POPULAR SELECTS ---
+        function populateSelects() {
+            const cliSelects = [document.getElementById('conCliente'), document.getElementById('lanCliente')];
+            cliSelects.forEach(sel => {
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Selecione um cliente...</option>';
+                state.clientes.forEach(c => {
+                    sel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`;
+                });
+            });
+        }
+
+        // --- MODAIS ---
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- CADASTROS ---
+        function salvarCliente(e) {
+            e.preventDefault();
+            const novo = {
+                id: Date.now(),
+                nome: document.getElementById('cliNome').value,
+                doc: document.getElementById('cliDoc').value,
+                fone: document.getElementById('cliFone').value,
+                email: document.getElementById('cliEmail').value,
+                cidade: document.getElementById('cliCidade').value,
+                uf: document.getElementById('cliUF').value
+            };
+            state.clientes.push(novo);
+            renderClientesTable();
+            populateSelects();
+            updateCalculations();
+            closeModal('modalCliente');
+            e.target.reset();
+        }
+
+        function salvarContrato(e) {
+            e.preventDefault();
+            const clienteNome = document.getElementById('conCliente').value;
+            const valor = parseFloat(document.getElementById('conValor').value);
+            const diaVenc = parseInt(document.getElementById('conDiaVenc').value);
+            const objeto = document.getElementById('conObjeto').value;
+
+            const novoContrato = {
+                id: Math.floor(100 + Math.random() * 900),
+                clienteNome,
+                objeto,
+                valor,
+                diaVenc,
+                status: 'Ativo'
+            };
+            state.contratos.push(novoContrato);
+
+            // Gerar lançamento financeiro se marcado
+            if (document.getElementById('conGerarFinanceiro').checked) {
+                state.receber.push({
+                    id: Date.now(),
+                    vencimento: `2026-11-${diaVenc < 10 ? '0' + diaVenc : diaVenc}`,
+                    recebimento: '-',
+                    cliente: clienteNome,
+                    desc: `Mensalidade Contrato #${novoContrato.id} - ${objeto}`,
+                    valor: valor,
+                    aReceber: valor,
+                    situacao: 'A vencer'
+                });
+            }
+
+            renderContratosTable();
+            renderReceberTable();
+            updateCalculations();
+            closeModal('modalContrato');
+            e.target.reset();
+        }
+
+        function salvarLancamento(e) {
+            e.preventDefault();
+            const desc = document.getElementById('lanDescricao').value;
+            const cliente = document.getElementById('lanCliente').value || 'Cliente Avulso';
+            const valor = parseFloat(document.getElementById('lanValor').value);
+            const vencimento = document.getElementById('lanVencimento').value;
+            const situacao = document.getElementById('lanSituacao').value;
+
+            state.receber.unshift({
+                id: Date.now(),
+                vencimento,
+                recebimento: situacao === 'Recebido' ? vencimento : '-',
+                cliente,
+                desc,
+                valor,
+                aReceber: situacao === 'Recebido' ? 0 : valor,
+                situacao
+            });
+
+            renderReceberTable();
+            updateCalculations();
+            closeModal('modalLancamento');
+            e.target.reset();
+        }
+
+        function darBaixa(id) {
+            const item = state.receber.find(r => r.id === id);
+            if (item && item.situacao !== 'Recebido') {
+                item.situacao = 'Recebido';
+                item.aReceber = 0;
+                item.recebimento = new Date().toISOString().split('T')[0];
+                renderReceberTable();
+                updateCalculations();
+            }
+        }
+
+        function filterReceberTable() {
+            const query = document.getElementById('filterInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#tabelaReceber tr');
+            rows.forEach(r => {
+                const text = r.innerText.toLowerCase();
+                r.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function formatDate(str) {
+            if (!str || str === '-') return '-';
+            const parts = str.split('-');
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        // --- GRÁFICO CHART.JS ---
+        function renderChart() {
+            const ctx = document.getElementById('cashFlowChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro'],
+                    datasets: [
+                        {
+                            label: 'Receitas (R$)',
+                            data: [12000, 15000, 14200, 18500, 16800, 21928],
+                            backgroundColor: '#0066FF',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'A Receber (R$)',
+                            data: [0, 0, 0, 1200, 2400, 3558],
+                            backgroundColor: '#93C5FD',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
